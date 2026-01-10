@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>bang1338</title>
+<style>
+body {
+    background: black;
+}
+canvas {
+    border: 1px solid #333;
+}
+</style>
+</head>
+<body>
+
+<canvas id="c" width="250" height="250"></canvas>
+
+<script>
+// ported from C++ code btw
+var canvas = document.getElementById("c");
+var ctx = canvas.getContext("2d");
+
+var points = [];
+var realPoints = [];
+
+var i;
+for (i = 0; i < 8; i++) {
+    points.push({x:0,y:0,z:0});
+    realPoints.push({x:0,y:0});
+}
+
+var XAngle = 0;
+var YAngle = 0;
+var ZAngle = 0;
+
+var distance = 15;
+var LineColor = 255;
+
+function effect_x() { return 125; }
+function effect_y() { return 125; }
+
+function RotationMatrix(index, x_angle, y_angle, z_angle, fov1, fov2, fov3) {
+    var DEG2RAD = 0.017453292; // pi/180
+
+    var x_a = x_angle * DEG2RAD;
+    var y_a = y_angle * DEG2RAD;
+    var z_a = z_angle * DEG2RAD;
+
+    var sinX = Math.sin(x_a);
+    var cosX = Math.cos(x_a);
+    var sinY = Math.sin(y_a);
+    var cosY = Math.cos(y_a);
+    var sinZ = Math.sin(z_a);
+    var cosZ = Math.cos(z_a);
+
+    var finalX =
+        (cosY * ((cosX * fov3) - sinX * fov2)) - sinY * fov1;
+
+    var finalY =
+        (cosZ * (cosX * fov2 + (sinX * fov3))) -
+        sinZ * (cosY * fov1 + (sinY * ((cosX * fov3) - sinX * fov2)));
+
+    var finalZ =
+        cosZ * (cosY * fov1 + (sinY * ((cosX * fov3) - sinX * fov2))) +
+        (sinZ * (cosX * fov2 + (sinX * fov3)));
+
+    points[index].x = finalX;
+    points[index].y = finalY;
+    points[index].z = finalZ;
+}
+
+function ComputePointsPerspective(index) {
+    realPoints[index].x =
+        Math.floor(4 * points[index].x * (64 / (points[index].z + 64)) + effect_x());
+    realPoints[index].y =
+        Math.floor(4 * points[index].y * (64 / (points[index].z + 64)) + effect_y());
+}
+
+function DrawLineFromIndex2D(i1, i2) {
+    ctx.beginPath();
+    ctx.moveTo(realPoints[i1].x, realPoints[i1].y);
+    ctx.lineTo(realPoints[i2].x, realPoints[i2].y);
+    ctx.stroke();
+}
+
+/* ===== main ===== */
+function DrawEffect() {
+    ctx.fillStyle = "black";
+    ctx.fillRect(0,0,250,250);
+    ctx.strokeStyle = "white";
+
+    XAngle += 1;
+    YAngle += 1;
+    ZAngle += 1;
+
+    var fov1, fov2;
+
+    fov1 = distance;
+    RotationMatrix(0, XAngle, YAngle, ZAngle, fov1, fov1, fov1);
+    fov2 = distance;
+    fov1 = -distance;
+    RotationMatrix(1, XAngle, YAngle, ZAngle, fov1, fov2, fov2);
+    fov2 = distance;
+    fov1 = -distance;
+    RotationMatrix(2, XAngle, YAngle, ZAngle, fov1, fov1, fov2);
+    fov1 = -distance;
+    RotationMatrix(3, XAngle, YAngle, ZAngle, fov1, fov1, fov1);
+    fov2 = -distance;
+    fov1 = distance;
+    RotationMatrix(4, XAngle, YAngle, ZAngle, fov1, fov2, fov2);
+    fov2 = -distance;
+    fov1 = distance;
+    RotationMatrix(5, XAngle, YAngle, ZAngle, fov1, fov1, fov2);
+    fov2 = -distance;
+    fov1 = distance;
+    RotationMatrix(6, XAngle, YAngle, ZAngle, fov2, fov1, fov2);
+    fov2 = distance;
+    fov1 = -distance;
+    RotationMatrix(7, XAngle, YAngle, ZAngle, fov2, fov1, fov2);
+
+    for (i = 0; i < 8; i++) {
+        ComputePointsPerspective(i);
+    }
+
+	// connect point to become cube
+    DrawLineFromIndex2D(0,1);
+    DrawLineFromIndex2D(1,2);
+    DrawLineFromIndex2D(2,7);
+    DrawLineFromIndex2D(7,0);
+    DrawLineFromIndex2D(3,4);
+    DrawLineFromIndex2D(4,5);
+    DrawLineFromIndex2D(5,6);
+    DrawLineFromIndex2D(6,3);
+    DrawLineFromIndex2D(0,5);
+    DrawLineFromIndex2D(1,6);
+    DrawLineFromIndex2D(2,3);
+    DrawLineFromIndex2D(7,4);
+}
+
+setInterval(DrawEffect, 8);
+</script>
+
+</body>
+</html>
